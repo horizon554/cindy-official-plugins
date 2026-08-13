@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "ios-simulator",
   "name": "iOS Simulator",
-  "description": "Adds the workflow and manual entry for Cindy's Host-owned embedded iOS Simulator. WDA, Native H.264, Native HID, lifecycle, recovery, admission, ownership, and compatibility fallback remain managed by Cindy Host; external Xcode/Simulator/simctl is a last resort only when the Host explicitly authorizes it and no Cindy-owned runtime is active.",
+  "description": "Adds Cindy's Host-owned embedded iOS Simulator workflow. WDA, H.264, HID, lifecycle, admission, ownership, recovery, and fallback remain Host-managed; external Xcode/Simulator/simctl is allowed only on an explicitly authorized fallback route with no Cindy-owned runtime active.",
   "whenToUse": "Prefer this for building, launching, inspecting, or interacting with an iOS app in Cindy's embedded simulator. If the Host explicitly reports that the simulator plugin is unavailable, disabled, or denied admission, and confirms that no Cindy-owned runtime is running, follow the Host-authorized Xcode/Simulator/simctl fallback; if ownership or cleanup state is unknown, stop and diagnose instead.",
   "version": "1.1.0",
   "minCindyVersion": "0.1.39",
