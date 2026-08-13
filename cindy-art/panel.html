@@ -6,8 +6,19 @@
   <link rel="stylesheet" href="panel.css" />
 </head>
 <body>
-  <!-- 被动画布:只听电子脑广播上墙,无任何输入控件(主循环铁则)。
-       结构约束:#wall 只管滚动(限高),#flow 只管分列(不限高)——
+  <section class="model-settings" aria-label="媒体模型配置">
+    <label class="model-field">
+      <span>图片模型</span>
+      <select id="image-model" aria-label="图片模型"></select>
+    </label>
+    <label class="model-field">
+      <span>视频模型</span>
+      <select id="video-model" aria-label="视频模型"></select>
+    </label>
+    <p id="model-status" class="model-status" role="status" aria-live="polite"></p>
+  </section>
+  <!-- 被动画布:只展示已收录作品。结构约束:#wall 只管滚动(限高),
+       #flow 只管分列(不限高)——
        columns 写在限高滚动容器上时,溢出内容会进横向溢出列而不是把
        容器撑高,纵向滚动条永远不出现(CSS 多列规范行为)。 -->
   <main id="wall">
