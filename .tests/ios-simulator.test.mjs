@@ -58,6 +58,11 @@ test('bundled skill requires the Host MCP and gates external fallbacks through t
   assert.ok(source.includes('runningInstanceCount'));
   assert.ok(source.includes('cleanup task'));
   assert.ok(source.includes('ownership state'));
+  assert.ok(source.includes('Host-provided workflow name'));
+  assert.ok(source.includes('exact device identity/UDID'));
+  assert.ok(source.includes("user's\noriginal task unchanged"));
+  assert.ok(source.includes('If the Host does not return\nall three handoff fields, stop'));
+  assert.ok(source.includes('guessed shell commands'));
   assert.ok(source.includes('Only the Host-authorized external fallback'));
 });
 

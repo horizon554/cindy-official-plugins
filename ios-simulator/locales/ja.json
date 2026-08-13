@@ -1,5 +1,5 @@
 {
   "name": "iOS シミュレータ",
   "description": "Cindy Host が管理する内蔵 iOS シミュレータのワークフローと手動入口を追加します。WDA、Native H.264、Native HID、ライフサイクル、復旧、Admission、所有権、互換フォールバックは引き続き Host が管理し、外部の Xcode／Simulator／simctl は Host が明示的に許可し、Cindy 所有のランタイムが動作していない場合だけ最後の手段として使用します。",
-  "whenToUse": "まず Cindy の内蔵シミュレータで iOS App をビルド、起動、確認、操作するときに使用します。Host がプラグインの未導入・無効化・Admission 拒否を明示し、Cindy 所有のランタイムが動作していないことを確認した場合だけ、Host が許可した Xcode／Simulator／simctl フォールバックに従います。所有権またはクリーンアップ状態が不明な場合は停止して診断します。"
+  "whenToUse": "まず Cindy の内蔵シミュレータを使用します。Host が未導入・無効化・Admission 拒否を示し、Cindy 所有のランタイム／クリーンアップ／lease／generation がなく runningInstanceCount=0 と確認した場合だけ、元のタスクと正確なデバイス ID を変更せず Host 指定の Xcode／Simulator／simctl ワークフローへ引き継ぎます。条件または引き継ぎ情報が欠ける場合は停止します。"
 }

@@ -1,5 +1,5 @@
 {
   "name": "iOS 模拟器",
   "description": "为 Cindy 主机管理的内置 iOS 模拟器提供工作流与手动入口。WDA、Native H.264、Native HID、生命周期、恢复、准入、所有权与兼容性回退仍由主机负责；只有主机明确授权且没有 Cindy-owned runtime 正在运行时，才把外部 Xcode/Simulator/simctl 作为最后手段。",
-  "whenToUse": "优先用于在 Cindy 内构建、启动、检查或操作 iOS App。如果主机明确报告模拟器插件不可用、被禁用或准入失败，并确认没有 Cindy-owned runtime 正在运行，才遵循主机授权的 Xcode/Simulator/simctl 回退；如果所有权或清理状态未知，则停止并先诊断。"
+  "whenToUse": "优先使用 Cindy 内置模拟器。只有主机报告插件不可用/被禁用/准入失败，且确认没有 Cindy-owned runtime、清理、lease、generation 迁移并且 runningInstanceCount=0 时，才将原始任务和精确设备身份原样交给主机指定的 Xcode/Simulator/simctl 工作流。任一条件或交接字段缺失都必须停止。"
 }
