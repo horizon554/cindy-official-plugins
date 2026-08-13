@@ -11,14 +11,20 @@
   };
   async function loadLocale() {
     var locale = 'en';
+    var controller = new AbortController();
+    var timeout = setTimeout(function abortLocaleRequest() {
+      controller.abort();
+    }, 2000);
     try {
-      var response = await fetch('/app-context');
+      var response = await fetch('/app-context', { signal: controller.signal });
       if (!response.ok) throw new Error('HTTP ' + response.status);
       var result = await response.json();
       var requested = result && result.context && result.context.locale;
       if (Object.prototype.hasOwnProperty.call(REAUTH_MESSAGES, requested)) locale = requested;
     } catch (_err) {
       locale = 'en';
+    } finally {
+      clearTimeout(timeout);
     }
     document.documentElement.lang = locale;
     $('reauth').textContent = REAUTH_MESSAGES[locale];
