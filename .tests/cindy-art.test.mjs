@@ -114,7 +114,7 @@ function createHarness(initialKv = {}, mediaCatalogs = { image: [], video: [] })
 }
 
 test('manifest accepts dynamic media model ids and exposes a result import tool', () => {
-  assert.equal(manifest.version, '1.12.5');
+  assert.equal(manifest.version, '1.12.6');
   assert.equal(manifest.minCindyVersion, '0.1.47');
   assert.equal(manifest.slots.includes('card'), false);
   for (const toolName of ['gen_image', 'edit_image', 'gen_video', 'edit_video']) {
@@ -214,13 +214,14 @@ test('Art interprets modalities and rejects a configured model that cannot perfo
 test('import_artwork requires a granted Core result and stores gallery state inside Art', async () => {
   const hash = 'a'.repeat(64);
   const mediaUrl = `cindy-media://blobs/${hash}.png`;
+  const pluginMediaUrl = `cindy-ghost://cindy-art/media/${hash}.png`;
   const harness = createHarness();
 
   const denied = await harness.call('import_artwork', { mediaUrl, caption: 'cat' });
   assert.equal(denied.ok, false);
 
   const imported = await harness.call('import_artwork', {
-    mediaUrl,
+    mediaUrl: pluginMediaUrl,
     caption: 'cat',
     attachments: [hash],
   });

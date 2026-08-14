@@ -256,9 +256,11 @@ async function handleImportArtwork(msg) {
   const args = msg.args || {};
   const mediaUrl = optionalString(args, 'mediaUrl');
   const caption = optionalString(args, 'caption') || '';
-  const match = mediaUrl ? MANAGED_MEDIA_URL_RE.exec(mediaUrl) : null;
+  const match = mediaUrl
+    ? MANAGED_MEDIA_URL_RE.exec(mediaUrl) || PLUGIN_MEDIA_URL_RE.exec(mediaUrl)
+    : null;
   if (!match) {
-    return failCall(msg.callId, 'mediaUrl 必须是 Cindy Core media 返回的受管媒体地址');
+    return failCall(msg.callId, 'mediaUrl 必须是 Host 授权后的受管媒体地址');
   }
   const hash = match[1];
   const ext = match[2].toLowerCase();
