@@ -11,6 +11,9 @@ const manifest = JSON.parse(
 const zhCnLocale = JSON.parse(
   fs.readFileSync(path.join(pluginRoot, 'locales/zh-CN.json'), 'utf8'),
 );
+const localeResources = ['zh-CN', 'en', 'ja', 'ko'].map((locale) =>
+  JSON.parse(fs.readFileSync(path.join(pluginRoot, `locales/${locale}.json`), 'utf8')),
+);
 
 test('manifest keeps privileged simulator runtime ownership in Cindy Host', () => {
   assert.equal(manifest.id, 'ios-simulator');
@@ -33,6 +36,13 @@ test('manifest keeps privileged simulator runtime ownership in Cindy Host', () =
   assert.match(manifest.whenToUse, /lease/);
   assert.match(manifest.whenToUse, /generation 迁移/);
   assert.match(manifest.whenToUse, /外部工作流/);
+  for (const resource of localeResources) {
+    assert.doesNotMatch(
+      resource.description,
+      /\bWDA\b|H\.264|\bHID\b|\bruntime\b|\bsimctl\b|\badmission\b/i,
+      'catalog descriptions should explain user value without implementation jargon',
+    );
+  }
   assert.equal(manifest.launch, 'on-demand');
   assert.deepEqual(manifest.slots, ['skill', 'ios-simulator']);
   assert.equal(manifest.panel, undefined);
