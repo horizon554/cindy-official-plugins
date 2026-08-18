@@ -29,7 +29,11 @@ function mediaCatalogsForPreferences(configuredModels) {
   return catalogs;
 }
 
-function createHarness(hostPreferences = {}, mediaCatalogs = { image: [], video: [] }) {
+function createHarness(
+  hostPreferences = {},
+  mediaCatalogs = { image: [], video: [] },
+  mediaCatalogFailure = null,
+) {
   let handler;
   const catalogs = structuredClone(mediaCatalogs);
   const results = [];
@@ -62,16 +66,20 @@ function createHarness(hostPreferences = {}, mediaCatalogs = { image: [], video:
   async function fetch(path) {
     fetches.push(path);
     if (path === '/media-models?type=image' || path === '/media-models?type=video') {
+      if (mediaCatalogFailure === 'network') throw new Error('Failed to fetch');
       const type = path.endsWith('image') ? 'image' : 'video';
       const models = catalogs[type];
       return {
         ok: true,
-        json: async () => ({
-          ok: true,
-          type,
-          models: structuredClone(models),
-          defaultModelId: models[0]?.id ?? null,
-        }),
+        json: async () => {
+          if (mediaCatalogFailure === 'json') throw new SyntaxError('Unexpected token');
+          return {
+            ok: true,
+            type,
+            models: structuredClone(models),
+            defaultModelId: models[0]?.id ?? null,
+          };
+        },
       };
     }
     return { ok: false };
@@ -208,4 +216,22 @@ test('Art reports Host preference failures instead of silently choosing the cata
 
   assert.equal(result.ok, false);
   assert.match(result.message, /当前没有可用的媒体模型/);
+});
+
+test('Art translates media catalog transport and JSON failures into actionable errors', async () => {
+  const networkResult = await createHarness({}, { image: [], video: [] }, 'network').call(
+    'gen_image',
+    { prompt: 'a cat' },
+  );
+  const jsonResult = await createHarness({}, { image: [], video: [] }, 'json').call(
+    'gen_image',
+    { prompt: 'a cat' },
+  );
+
+  assert.equal(networkResult.ok, false);
+  assert.match(networkResult.message, /无法连接 Cindy 媒体模型目录.*重试/);
+  assert.doesNotMatch(networkResult.message, /Failed to fetch/);
+  assert.equal(jsonResult.ok, false);
+  assert.match(jsonResult.message, /媒体模型目录响应无法解析.*重启 Cindy/);
+  assert.doesNotMatch(jsonResult.message, /Unexpected token/);
 });

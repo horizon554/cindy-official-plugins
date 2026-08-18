@@ -44,11 +44,21 @@ function optionalString(args, key) {
 }
 
 async function readMediaCatalog(type) {
-  const response = await fetch('/media-models?type=' + type);
+  let response;
+  try {
+    response = await fetch('/media-models?type=' + type);
+  } catch (_error) {
+    throw new Error('无法连接 Cindy 媒体模型目录，请检查 Cindy 服务状态后重试');
+  }
   if (!response.ok) throw new Error('无法读取 Cindy 媒体模型目录');
-  const result = await response.json();
+  let result;
+  try {
+    result = await response.json();
+  } catch (_error) {
+    throw new Error('Cindy 媒体模型目录响应无法解析，请重启 Cindy 后重试');
+  }
   if (!result || result.ok !== true || result.type !== type || !Array.isArray(result.models)) {
-    throw new Error('Cindy 媒体模型目录返回不合法');
+    throw new Error('Cindy 媒体模型目录返回不合法，请升级或重启 Cindy 后重试');
   }
   return result.models;
 }
