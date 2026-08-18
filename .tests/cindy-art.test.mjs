@@ -52,6 +52,7 @@ function createHarness(
       if (message.type === 'host-request' && message.kind === 'cindy-preference') {
         hostRequests.push(structuredClone(message));
         const modelId = hostPreferences[message.capability];
+        if (modelId instanceof Error) throw modelId;
         return modelId
           ? { ok: true, capability: message.capability, modelId }
           : { ok: false, errorCode: 'NOT_AVAILABLE', message: '当前没有可用的媒体模型' };
@@ -226,6 +227,20 @@ test('Art reports Host preference failures instead of silently choosing the cata
 
   assert.equal(result.ok, false);
   assert.match(result.message, /当前没有可用的媒体模型/);
+});
+
+test('Art translates rejected Host preference requests into an actionable error', async () => {
+  const catalogs = mediaCatalogsForPreferences({ 'image.generate': 'image-default' });
+  const harness = createHarness(
+    { 'image.generate': new Error('Failed to send') },
+    catalogs,
+  );
+
+  const result = await harness.call('gen_image', { prompt: 'a cat' });
+
+  assert.equal(result.ok, false);
+  assert.match(result.message, /无法读取 Art 详情页中的模型配置.*重启 Cindy/);
+  assert.doesNotMatch(result.message, /Failed to send/);
 });
 
 test('Art translates media catalog transport and JSON failures into actionable errors', async () => {

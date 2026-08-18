@@ -95,11 +95,16 @@ function hostCapability(invocationCapability) {
 
 async function readConfiguredModel(invocationCapability) {
   const capability = hostCapability(invocationCapability);
-  const result = await cindy.send({
-    type: 'host-request',
-    kind: 'cindy-preference',
-    capability: capability,
-  });
+  let result;
+  try {
+    result = await cindy.send({
+      type: 'host-request',
+      kind: 'cindy-preference',
+      capability: capability,
+    });
+  } catch (_error) {
+    throw new Error('无法读取 Art 详情页中的模型配置，请重启 Cindy 后重试');
+  }
   if (
     !result ||
     result.ok !== true ||
