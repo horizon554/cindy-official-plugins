@@ -39,6 +39,7 @@ function createHarness(
   const results = [];
   const hostRequests = [];
   const fetches = [];
+  const warnings = [];
 
   const cindy = {
     onHostMessage(nextHandler) {
@@ -67,6 +68,9 @@ function createHarness(
     fetches.push(path);
     if (path === '/media-models?type=image' || path === '/media-models?type=video') {
       if (mediaCatalogFailure === 'network') throw new Error('Failed to fetch');
+      if (typeof mediaCatalogFailure === 'string' && mediaCatalogFailure.startsWith('http-')) {
+        return { ok: false, status: Number(mediaCatalogFailure.slice(5)) };
+      }
       const type = path.endsWith('image') ? 'image' : 'video';
       const models = catalogs[type];
       return {
@@ -87,6 +91,11 @@ function createHarness(
 
   vm.runInNewContext(source, {
     Array,
+    console: {
+      warn(...args) {
+        warnings.push(structuredClone(args));
+      },
+    },
     Error,
     JSON,
     Promise,
@@ -99,6 +108,7 @@ function createHarness(
   return {
     fetches,
     hostRequests,
+    warnings,
     async call(tool, args) {
       await handler({ type: 'tool-call', tool, callId: `call-${tool}`, args });
       await new Promise((resolve) => setImmediate(resolve));
@@ -234,4 +244,22 @@ test('Art translates media catalog transport and JSON failures into actionable e
   assert.equal(jsonResult.ok, false);
   assert.match(jsonResult.message, /媒体模型目录响应无法解析.*重启 Cindy/);
   assert.doesNotMatch(jsonResult.message, /Unexpected token/);
+});
+
+test('Art logs media catalog HTTP failures and returns one user-facing state', async () => {
+  for (const status of [401, 403, 404, 500]) {
+    const harness = createHarness({}, { image: [], video: [] }, `http-${status}`);
+    const result = await harness.call(
+      'gen_image',
+      { prompt: 'a cat' },
+    );
+    assert.equal(result.ok, false);
+    assert.equal(result.message, '暂无可用模型');
+    assert.deepEqual(structuredClone(harness.warnings), [
+      [
+        '[cindy-art] media catalog request failed',
+        { type: 'image', status },
+      ],
+    ]);
+  }
 });

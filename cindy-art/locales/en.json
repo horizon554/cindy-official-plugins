@@ -4,16 +4,16 @@
   "whenToUse": "Use this plugin to create images, illustrations, avatars, posters, or other artwork; edit a generated image by adding elements or changing its style; generate a short video; or animate a still image.",
   "tools": {
     "gen_image": {
-      "description": "Prepare ordinary parameters for text-to-image creation. The current Agent then calls Cindy Core media with the model configured for image generation on the plugin details page."
+      "description": "Prepare ordinary parameters for text-to-image creation. Unless the user explicitly names a model in this conversation, the current Agent calls Cindy Core media with the image-generation model configured on the plugin details page."
     },
     "edit_image": {
-      "description": "Prepare ordinary parameters to edit, redraw, stylize, or combine up to four source images. The current Agent then calls Cindy Core media with the model configured for image editing on the plugin details page."
+      "description": "Prepare ordinary parameters to edit, redraw, stylize, or combine up to four source images. Unless the user explicitly names a model in this conversation, the current Agent calls Cindy Core media with the image-editing model configured on the plugin details page."
     },
     "gen_video": {
-      "description": "Prepare ordinary parameters for text-to-video creation. The current Agent then calls Cindy Core media with the model configured for video generation on the plugin details page."
+      "description": "Prepare ordinary parameters for text-to-video creation. Unless the user explicitly names a model in this conversation, the current Agent calls Cindy Core media with the video-generation model configured on the plugin details page."
     },
     "edit_video": {
-      "description": "Prepare ordinary parameters for image-to-video creation: one reference image is the first frame and two represent the first and last frames. The current Agent then calls Cindy Core media with the model configured for image-to-video on the plugin details page."
+      "description": "Prepare ordinary parameters for image-to-video creation: one reference image is the first frame and two represent the first and last frames. Unless the user explicitly names a model in this conversation, the current Agent calls Cindy Core media with the image-to-video model configured on the plugin details page."
     }
   }
 }

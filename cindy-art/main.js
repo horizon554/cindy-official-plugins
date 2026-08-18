@@ -6,7 +6,7 @@
  * 对话明确点名模型时才使用工具参数中的 model。
  */
 
-/* global cindy */
+/* global cindy, console */
 
 const MANAGED_MEDIA_URL_RE = /^cindy-media:\/\/blobs\/([0-9a-f]{64})(\.[a-z0-9]{1,10})$/;
 const MEDIA_REQUIREMENTS = {
@@ -50,7 +50,13 @@ async function readMediaCatalog(type) {
   } catch (_error) {
     throw new Error('无法连接 Cindy 媒体模型目录，请检查 Cindy 服务状态后重试');
   }
-  if (!response.ok) throw new Error('无法读取 Cindy 媒体模型目录');
+  if (!response.ok) {
+    console.warn('[cindy-art] media catalog request failed', {
+      type: type,
+      status: response.status,
+    });
+    throw new Error('暂无可用模型');
+  }
   let result;
   try {
     result = await response.json();
