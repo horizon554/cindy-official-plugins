@@ -4,7 +4,7 @@
   "name": "Art",
   "description": "用 Cindy 的图像与视频能力画图、改图、生成短视频,支持 $cindy-art 直接召唤。",
   "whenToUse": "需要生成图片、画画、插画、配图、头像、海报,基于已生成的图改图、加元素、换风格、P 图,或想生成短视频、让一张图动起来时找我。",
-  "version": "1.12.6",
+  "version": "1.13.1",
   "minCindyVersion": "0.1.47",
   "locales": {
     "en": "locales/en.json",
@@ -43,7 +43,7 @@
   "tools": [
     {
       "name": "gen_image",
-      "description": "整理文生图需求并返回普通创作参数。本工具不生成媒体；调用后由当前 Agent 直接调用 Cindy Core media（完整工具名 mcp__cindy__media），不要查本地 API；成功后再调用 import_artwork 收录画廊。",
+      "description": "整理文生图需求并返回普通创作参数。本工具不生成媒体；调用后由当前 Agent 直接调用 Cindy Core media（完整工具名 mcp__cindy__media），不要查本地 API或另行选型。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -53,7 +53,7 @@
           },
           "model": {
             "type": "string",
-            "description": "可选。仅当用户在本次对话明确点名模型时传模型目录里的 id；否则不传，由 Art 使用自己面板中的「图片模型」配置。"
+            "description": "可选。仅当用户在本次对话明确点名模型时传模型目录里的 id；否则不传，由 Art 使用插件详情页「Cindy 能力」中为出图配置的模型。"
           },
           "aspectRatio": {
             "type": "string",
@@ -81,7 +81,7 @@
     },
     {
       "name": "edit_image",
-      "description": "整理改图需求并返回普通创作参数，最多 4 张参考图。本工具不生成媒体；调用后由当前 Agent 直接调用 Cindy Core media（完整工具名 mcp__cindy__media），不要查本地 API；成功后再调用 import_artwork 收录画廊。插件画廊里的 cindy-media:// 地址填 images；用户随消息发来的图放 ghost_call 顶层 attachments，调用 Core 时使用对话中的原始媒体地址，不要把插件返回的授权指纹当 URL。",
+      "description": "整理改图需求并返回普通创作参数，最多 4 张参考图。本工具不生成媒体；调用后由当前 Agent 直接调用 Cindy Core media（完整工具名 mcp__cindy__media），不要查本地 API 或另行选型。已有的 cindy-media:// 地址填 images；用户随消息发来的图放 ghost_call 顶层 attachments，调用 Core 时使用对话中的原始媒体地址。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -96,11 +96,11 @@
             },
             "minItems": 1,
             "maxItems": 4,
-            "description": "可选：本插件之前生成的完整 cindy-media:// 或 cindy-ghost://cindy-art/media/ 源图地址。只改用户发来的图时不填，把用户图放 ghost_call 顶层 attachments；调用 Core 时继续使用对话里的原始媒体地址(images 与 attachments 至少有一路)。"
+            "description": "可选：完整的 cindy-media://blobs/<指纹>.<后缀> 源图地址。只改用户发来的图时不填，把用户图放 ghost_call 顶层 attachments；调用 Core 时继续使用对话里的原始媒体地址(images 与 attachments 至少有一路)。"
           },
           "model": {
             "type": "string",
-            "description": "可选。仅当用户在本次对话明确点名模型时传模型目录里的 id；否则不传，由 Art 使用自己面板中的「图片模型」配置。"
+            "description": "可选。仅当用户在本次对话明确点名模型时传模型目录里的 id；否则不传，由 Art 使用插件详情页「Cindy 能力」中为改图配置的模型。"
           },
           "aspectRatio": {
             "type": "string",
@@ -128,7 +128,7 @@
     },
     {
       "name": "gen_video",
-      "description": "整理文生视频需求并返回普通创作参数。本工具不生成媒体；调用后由当前 Agent 直接调用 Cindy Core media（完整工具名 mcp__cindy__media），不要查本地 API；成功后再调用 import_artwork 收录画廊。视频生成可能需要轮询数分钟。",
+      "description": "整理文生视频需求并返回普通创作参数。本工具不生成媒体；调用后由当前 Agent 直接调用 Cindy Core media（完整工具名 mcp__cindy__media），不要查本地 API 或另行选型。视频生成可能需要轮询数分钟。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -138,7 +138,7 @@
           },
           "model": {
             "type": "string",
-            "description": "可选。仅当用户在本次对话明确点名模型时传模型目录里的 id；否则不传，由 Art 使用自己面板中的「视频模型」配置。"
+            "description": "可选。仅当用户在本次对话明确点名模型时传模型目录里的 id；否则不传，由 Art 使用插件详情页「Cindy 能力」中为生成视频配置的模型。"
           },
           "tier": {
             "type": "string",
@@ -157,7 +157,7 @@
     },
     {
       "name": "edit_video",
-      "description": "整理图生视频需求并返回普通创作参数：1 张参考图作为首帧，2 张参考图表示首尾帧。本工具不生成媒体；调用后由当前 Agent 直接调用 Cindy Core media（完整工具名 mcp__cindy__media），不要查本地 API；成功后再调用 import_artwork 收录画廊。插件画廊里的 cindy-media:// 地址填 images；用户随消息发来的图放 ghost_call 顶层 attachments，调用 Core 时使用对话中的原始媒体地址，不要把插件返回的授权指纹当 URL。",
+      "description": "整理图生视频需求并返回普通创作参数：1 张参考图作为首帧，2 张参考图表示首尾帧。本工具不生成媒体；调用后由当前 Agent 直接调用 Cindy Core media（完整工具名 mcp__cindy__media），不要查本地 API 或另行选型。已有的 cindy-media:// 地址填 images；用户随消息发来的图放 ghost_call 顶层 attachments，调用 Core 时使用对话中的原始媒体地址。",
       "parameters": {
         "type": "object",
         "properties": {
@@ -172,11 +172,11 @@
             },
             "minItems": 1,
             "maxItems": 2,
-            "description": "可选：本插件名下完整的 cindy-media:// 或 cindy-ghost://cindy-art/media/ 参考图地址，1–2 张。只用用户发来的图时不填，走 attachments；调用 Core 时继续使用对话里的原始媒体地址(两路至少有一路)。"
+            "description": "可选：完整的 cindy-media://blobs/<指纹>.<后缀> 参考图地址，1–2 张。只用用户发来的图时不填，走 attachments；调用 Core 时继续使用对话里的原始媒体地址(两路至少有一路)。"
           },
           "model": {
             "type": "string",
-            "description": "可选。仅当用户在本次对话明确点名模型时传模型目录里的 id；否则不传，由 Art 使用自己面板中的「视频模型」配置。"
+            "description": "可选。仅当用户在本次对话明确点名模型时传模型目录里的 id；否则不传，由 Art 使用插件详情页「Cindy 能力」中为图生视频配置的模型。"
           },
           "tier": {
             "type": "string",
@@ -190,29 +190,6 @@
         },
         "required": [
           "prompt"
-        ]
-      }
-    },
-    {
-      "name": "import_artwork",
-      "description": "仅在 Cindy Core media 成功后调用，把一个已经生成的受管媒体收录到 Art 画廊。每个媒体地址调用一次，只传 mediaUrl；Host 会按 attachmentArgs 声明机械完成授权。本工具不生成媒体，也不在聊天中重复展示结果。",
-      "attachmentArgs": [
-        "mediaUrl"
-      ],
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "mediaUrl": {
-            "type": "string",
-            "description": "Cindy Core media 返回的 cindy-media://blobs/<指纹>.<后缀> 地址。"
-          },
-          "caption": {
-            "type": "string",
-            "description": "可选。画廊中展示的作品说明，通常使用本次创作提示词。"
-          }
-        },
-        "required": [
-          "mediaUrl"
         ]
       }
     }

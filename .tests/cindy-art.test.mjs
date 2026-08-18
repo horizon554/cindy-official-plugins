@@ -13,7 +13,7 @@ function mediaCatalogsForPreferences(configuredModels) {
     'image.generate': { type: 'image', input: ['text'], output: ['image'] },
     'image.edit': { type: 'image', input: ['text', 'image'], output: ['image'] },
     'video.generate': { type: 'video', input: ['text'], output: ['video'] },
-    'video.edit': { type: 'video', input: ['text', 'image'], output: ['video'] },
+    'video.image_to_video': { type: 'video', input: ['text', 'image'], output: ['video'] },
   };
   for (const [capability, id] of Object.entries(configuredModels)) {
     const requirement = requirements[capability];
@@ -29,19 +29,12 @@ function mediaCatalogsForPreferences(configuredModels) {
   return catalogs;
 }
 
-function createHarness(initialKv = {}, mediaCatalogs = { image: [], video: [] }) {
+function createHarness(hostPreferences = {}, mediaCatalogs = { image: [], video: [] }) {
   let handler;
-  let kv = structuredClone(initialKv);
   const catalogs = structuredClone(mediaCatalogs);
   const results = [];
-  const broadcasts = [];
+  const hostRequests = [];
   const fetches = [];
-
-  class FakeBroadcastChannel {
-    postMessage(message) {
-      broadcasts.push(message);
-    }
-  }
 
   const cindy = {
     onHostMessage(nextHandler) {
@@ -51,16 +44,23 @@ function createHarness(initialKv = {}, mediaCatalogs = { image: [], video: [] })
       return Promise.resolve();
     },
     async send(message) {
-      if (message.type !== 'tool-result') {
-        throw new Error(`unexpected cindy.send type: ${message.type}`);
+      if (message.type === 'host-request' && message.kind === 'cindy-preference') {
+        hostRequests.push(structuredClone(message));
+        const modelId = hostPreferences[message.capability];
+        return modelId
+          ? { ok: true, capability: message.capability, modelId }
+          : { ok: false, errorCode: 'NOT_AVAILABLE', message: '当前没有可用的媒体模型' };
       }
-      results.push(message);
-      return { ok: true };
+      if (message.type === 'tool-result') {
+        results.push(message);
+        return { ok: true };
+      }
+      throw new Error(`unexpected cindy.send type: ${message.type}`);
     },
   };
 
-  async function fetch(path, options = {}) {
-    fetches.push({ path, options });
+  async function fetch(path) {
+    fetches.push(path);
     if (path === '/media-models?type=image' || path === '/media-models?type=video') {
       const type = path.endsWith('image') ? 'image' : 'video';
       const models = catalogs[type];
@@ -74,37 +74,23 @@ function createHarness(initialKv = {}, mediaCatalogs = { image: [], video: [] })
         }),
       };
     }
-    if (path !== '/kv') return { ok: false };
-    if (!options.method || options.method === 'GET') {
-      return { ok: true, json: async () => structuredClone(kv) };
-    }
-    if (options.method === 'PUT') {
-      kv = JSON.parse(options.body);
-      return { ok: true };
-    }
     return { ok: false };
   }
 
   vm.runInNewContext(source, {
     Array,
-    BroadcastChannel: FakeBroadcastChannel,
-    Date,
     Error,
     JSON,
     Promise,
     String,
-    TextEncoder,
     cindy,
     fetch,
   });
   assert.equal(typeof handler, 'function');
 
   return {
-    broadcasts,
     fetches,
-    get kv() {
-      return kv;
-    },
+    hostRequests,
     async call(tool, args) {
       await handler({ type: 'tool-call', tool, callId: `call-${tool}`, args });
       await new Promise((resolve) => setImmediate(resolve));
@@ -113,83 +99,86 @@ function createHarness(initialKv = {}, mediaCatalogs = { image: [], video: [] })
   };
 }
 
-test('manifest accepts dynamic media model ids and exposes a result import tool', () => {
-  assert.equal(manifest.version, '1.12.6');
+test('manifest exposes only the four media preparation tools', () => {
+  assert.equal(manifest.version, '1.13.1');
   assert.equal(manifest.minCindyVersion, '0.1.47');
   assert.equal(manifest.slots.includes('card'), false);
-  for (const toolName of ['gen_image', 'edit_image', 'gen_video', 'edit_video']) {
-    const tool = manifest.tools.find(({ name }) => name === toolName);
-    assert.ok(tool, `${toolName} declaration is missing`);
+  assert.deepEqual(
+    manifest.tools.map(({ name }) => name),
+    ['gen_image', 'edit_image', 'gen_video', 'edit_video'],
+  );
+  for (const tool of manifest.tools) {
     assert.equal(tool.parameters.properties.model.type, 'string');
     assert.equal(tool.parameters.properties.model.enum, undefined);
   }
-  assert.ok(manifest.tools.some(({ name }) => name === 'import_artwork'));
+  assert.doesNotMatch(JSON.stringify(manifest), /import_artwork|gallery|画廊/);
 });
 
-test('creation tools return ordinary parameters and read Art panel preferences', async () => {
-  const configured = {
-    'image.generate': 'image-model',
-    'image.edit': 'image-model',
-    'video.generate': 'video-model',
-    'video.edit': 'video-model',
-  };
-  const harness = createHarness(
-    { imageModelId: 'image-model', videoModelId: 'video-model' },
-    mediaCatalogsForPreferences(configured),
-  );
-
-  const image = await harness.call('gen_image', { prompt: 'a cat', tier: 'best' });
-  const video = await harness.call('gen_video', { prompt: 'a running cat' });
-
-  assert.equal(image.ok, true);
-  assert.equal(image.result.request.capability, 'image.generate');
-  assert.equal(image.result.request.modelId, 'image-model');
-  assert.equal(image.result.request.qualityIntent, 'best');
-  assert.equal(video.result.request.capability, 'video.generate');
-  assert.equal(video.result.request.modelId, 'video-model');
-  assert.equal(
-    harness.fetches.some(({ path }) => path === '/media-models?type=image'),
-    true,
-  );
-  assert.equal(
-    harness.fetches.some(({ path }) => path === '/media-models?type=video'),
-    true,
-  );
-});
-
-test('edit tools reuse the two Art panel model preferences', async () => {
+test('each operation uses the exact model configured by Host for that capability', async () => {
   const hash = 'b'.repeat(64);
-  const configured = {
-    'image.generate': 'qwen/qwen-image-3',
-    'image.edit': 'qwen/qwen-image-3',
-    'video.generate': 'minimax/minimax-h3',
+  const hostPreferences = {
+    'image.generate': 'google/gemini-3-pro-image',
+    'image.edit': 'openai/gpt-image-2',
+    'video.generate': 'bytedance-seed/seedance-2.5',
     'video.edit': 'minimax/minimax-h3',
   };
-  const harness = createHarness(
-    { imageModelId: 'qwen/qwen-image-3', videoModelId: 'minimax/minimax-h3' },
-    mediaCatalogsForPreferences(configured),
-  );
-
-  const image = await harness.call('edit_image', {
-    prompt: 'add Chinese elements',
-    images: [`cindy-ghost://cindy-art/media/${hash}.png`],
+  const catalogs = mediaCatalogsForPreferences({
+    'image.generate': hostPreferences['image.generate'],
+    'image.edit': hostPreferences['image.edit'],
+    'video.generate': hostPreferences['video.generate'],
+    'video.image_to_video': hostPreferences['video.edit'],
   });
-  const video = await harness.call('edit_video', {
+  const harness = createHarness(hostPreferences, catalogs);
+
+  const image = await harness.call('gen_image', { prompt: 'a cat', tier: 'best' });
+  const edit = await harness.call('edit_image', {
+    prompt: 'add snow',
+    images: [`cindy-media://blobs/${hash}.png`],
+  });
+  const video = await harness.call('gen_video', { prompt: 'a running cat' });
+  const imageToVideo = await harness.call('edit_video', {
     prompt: 'make it move',
     images: [`cindy-media://blobs/${hash}.png`],
   });
 
-  assert.equal(image.result.request.modelId, 'qwen/qwen-image-3');
-  assert.deepEqual(structuredClone(image.result.request.referenceMedia.pluginMediaUrls), [
+  assert.equal(image.ok, true);
+  assert.equal(image.result.request.modelId, hostPreferences['image.generate']);
+  assert.equal(edit.result.request.modelId, hostPreferences['image.edit']);
+  assert.deepEqual(structuredClone(edit.result.request.referenceMedia.managedMediaUrls), [
     `cindy-media://blobs/${hash}.png`,
   ]);
-  assert.equal(video.result.request.modelId, 'minimax/minimax-h3');
+  assert.equal(video.result.request.modelId, hostPreferences['video.generate']);
+  assert.equal(imageToVideo.result.request.capability, 'video.image_to_video');
+  assert.equal(imageToVideo.result.request.modelId, hostPreferences['video.edit']);
+  assert.deepEqual(
+    harness.hostRequests.map(({ capability }) => capability),
+    ['image.generate', 'image.edit', 'video.generate', 'video.edit'],
+  );
+  assert.equal(harness.fetches.some((path) => path === '/kv'), false);
 });
 
-test('Art interprets modalities and rejects a configured model that cannot perform the action', async () => {
+test('a model explicitly named by the user overrides Host configuration', async () => {
+  const hostPreferences = { 'image.generate': 'image-default' };
+  const catalogs = mediaCatalogsForPreferences({
+    'image.generate': 'image-default',
+    'image.edit': 'image-explicit',
+  });
+  const harness = createHarness(hostPreferences, catalogs);
+
+  const result = await harness.call('gen_image', {
+    prompt: 'a cat',
+    model: 'image-explicit',
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.result.request.modelId, 'image-explicit');
+  assert.deepEqual(harness.hostRequests, []);
+});
+
+test('Art rejects a configured model whose modalities do not support the operation', async () => {
   const hash = 'c'.repeat(64);
   const harness = createHarness(
-    { imageModelId: 'text-only-image' },
+    { 'image.edit': 'text-only-image' },
     {
       image: [
         {
@@ -211,27 +200,12 @@ test('Art interprets modalities and rejects a configured model that cannot perfo
   assert.match(result.message, /未声明支持改图所需的输入输出模态/);
 });
 
-test('import_artwork requires a granted Core result and stores gallery state inside Art', async () => {
-  const hash = 'a'.repeat(64);
-  const mediaUrl = `cindy-media://blobs/${hash}.png`;
-  const pluginMediaUrl = `cindy-ghost://cindy-art/media/${hash}.png`;
-  const harness = createHarness();
+test('Art reports Host preference failures instead of silently choosing the catalog default', async () => {
+  const catalogs = mediaCatalogsForPreferences({ 'image.generate': 'image-default' });
+  const harness = createHarness({}, catalogs);
 
-  const denied = await harness.call('import_artwork', { mediaUrl, caption: 'cat' });
-  assert.equal(denied.ok, false);
+  const result = await harness.call('gen_image', { prompt: 'a cat' });
 
-  const imported = await harness.call('import_artwork', {
-    mediaUrl: pluginMediaUrl,
-    caption: 'cat',
-    attachments: [hash],
-  });
-  assert.equal(imported.ok, true);
-  assert.deepEqual(
-    harness.kv.artworks.map(({ src, caption }) => ({ src, caption })),
-    [{ src: `cindy-ghost://cindy-art/media/${hash}.png`, caption: 'cat' }],
-  );
-  assert.deepEqual(structuredClone(harness.broadcasts), [
-    { type: 'artwork', src: `cindy-ghost://cindy-art/media/${hash}.png`, caption: 'cat' },
-  ]);
-  assert.equal(harness.fetches.some(({ path }) => path === '/gallery'), false);
+  assert.equal(result.ok, false);
+  assert.match(result.message, /当前没有可用的媒体模型/);
 });
