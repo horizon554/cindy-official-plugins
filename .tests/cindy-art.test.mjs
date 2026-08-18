@@ -100,8 +100,8 @@ function createHarness(hostPreferences = {}, mediaCatalogs = { image: [], video:
 }
 
 test('manifest exposes only the four media preparation tools', () => {
-  assert.equal(manifest.version, '1.13.1');
-  assert.equal(manifest.minCindyVersion, '0.1.47');
+  assert.equal(manifest.version, '1.13.2');
+  assert.equal(manifest.minCindyVersion, '0.1.53');
   assert.equal(manifest.slots.includes('card'), false);
   assert.deepEqual(
     manifest.tools.map(({ name }) => name),
