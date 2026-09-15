@@ -54,7 +54,7 @@ test('manifest keeps privileged simulator runtime ownership in Cindy Host', () =
   const parts = manifest.version.split('.').map(BigInt);
   const difference = parts.findIndex((part, index) => part !== baseVersion[index]);
   assert.ok(difference >= 0 && parts[difference] > baseVersion[difference], 'version must exceed main 1.1.3');
-  assert.equal(manifest.minCindyVersion, '0.1.82', 'Draft target for the first stable no-tools Manual release');
+  assert.equal(manifest.minCindyVersion, '0.1.83', 'Draft target for the first stable no-tools Manual release');
   const validated = validateGhostManifest(manifest);
   assert.equal(validated.ok, true, validated.reason);
   assert.equal(validated.manifest.kind, 'chip', 'preserve the legacy default kind');
@@ -207,7 +207,7 @@ test('Draft notes make the provisional stable-version gate explicit', () => {
   for (const file of ['README.md', 'README.zh-CN.md']) {
     const source = fs.readFileSync(path.join(pluginRoot, file), 'utf8');
     for (const evidence of [
-      '0.1.82', '0.1.79', '#4440', 'b201f1f663a1199c1e296ee0b6ddca7d465d4e9d',
+      '0.1.83', '0.1.79', '#4440', 'b201f1f663a1199c1e296ee0b6ddca7d465d4e9d',
       'visibleChipGhosts',
       'readGhostManual', 'ghostHasTools', 'ghost_info', 'ghost_manual', 'ghost_call',
     ]) assert.ok(source.includes(evidence), `${file} must explain ${evidence}`);

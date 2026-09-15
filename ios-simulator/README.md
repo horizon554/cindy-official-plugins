@@ -8,9 +8,9 @@ mode, and four-language catalog copy are preserved.
 
 ## Minimum Cindy version
 
-`minCindyVersion: 0.1.82` is the **provisional Draft target** requested for this
+`minCindyVersion: 0.1.83` is the **provisional Draft target** requested for this
 PR. It prevents older clients from receiving this Manual-only release. Before
-the PR is marked ready, v0.1.82 must exist as a formally released stable Cindy
+the PR is marked ready, v0.1.83 must exist as a formally released stable Cindy
 build, contain the Host change below, and pass the production verification
 described in this document. If the first qualifying stable release has another
 version, update `minCindyVersion` to that actual version instead of publishing
@@ -51,7 +51,7 @@ English.
 ## Verification gate
 
 Before marking this Draft ready, install the exact packaged `.cindy` on a real
-device running stable Cindy v0.1.82 or later and verify all of the following:
+device running stable Cindy v0.1.83 or later and verify all of the following:
 
 - The installed, enabled plugin appears in the roster and `ghost_info`.
 - `ghost_manual` reads the entry and both child pages.

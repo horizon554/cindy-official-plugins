@@ -7,10 +7,10 @@
 
 ## 最低 Cindy 版本
 
-`minCindyVersion: 0.1.82` 是本 Draft PR 按目标填写的**暂定版本**，用于阻止旧客户端
-收到这个仅含 Manual 的 release。PR 转为 Ready 前，必须确认 v0.1.82 已作为 Cindy
+`minCindyVersion: 0.1.83` 是本 Draft PR 按目标填写的**暂定版本**，用于阻止旧客户端
+收到这个仅含 Manual 的 release。PR 转为 Ready 前，必须确认 v0.1.83 已作为 Cindy
 正式稳定版发布、包含下述 Host 改动，并完成本文所列生产验证。如果首个满足条件的
-稳定版不是 0.1.82，应把 `minCindyVersion` 改为实际版本，不能直接发布 Draft 暂定值。
+稳定版不是 0.1.83，应把 `minCindyVersion` 改为实际版本，不能直接发布 Draft 暂定值。
 
 - [Cindy v0.1.64](https://github.com/makecindy/cindy/releases/tag/v0.1.64) 是首个支持
   Manifest v3 的稳定版；其 manifest 契约支持 `iosSimulator` 与 `manual`，但这本身
@@ -40,7 +40,7 @@
 
 ## 验证门槛
 
-Draft 转为 Ready 前，必须在运行稳定版 Cindy v0.1.82 或更高版本的实际设备上安装
+Draft 转为 Ready 前，必须在运行稳定版 Cindy v0.1.83 或更高版本的实际设备上安装
 精确打包的 `.cindy`，并验证：
 
 - 已安装并启用的插件出现在花名册和 `ghost_info`。
