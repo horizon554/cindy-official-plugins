@@ -7,23 +7,16 @@
 
 ## 最低 Cindy 版本
 
-`minCindyVersion: 0.1.83` 是本 Draft PR 按目标填写的**暂定版本**，用于阻止旧客户端
-收到这个仅含 Manual 的 release。PR 转为 Ready 前，必须确认 v0.1.83 已作为 Cindy
-正式稳定版发布、包含下述 Host 改动，并完成本文所列生产验证。如果首个满足条件的
-稳定版不是 0.1.83，应把 `minCindyVersion` 改为实际版本，不能直接发布 Draft 暂定值。
+`minCindyVersion: 0.1.83` 是这个仅含 Manual 的 release 支持的最低 Cindy 版本，
+用于阻止旧客户端收到依赖下述无 tools Manual 发现和读取能力的包。
 
 - [Cindy v0.1.64](https://github.com/makecindy/cindy/releases/tag/v0.1.64) 是首个支持
   Manifest v3 的稳定版；其 manifest 契约支持 `iosSimulator` 与 `manual`，但这本身
   不能让无 tools 的 Manual 插件被发现。
-- 2026-09-15 核实时，最新稳定版仍为
-  [v0.1.79](https://github.com/makecindy/cindy/releases/tag/v0.1.79)。其
-  [Ghost 集成](https://github.com/makecindy/cindy/blob/abcf92c2b34e99209e505662a3fe4e11868e8aa1/apps/desktop/src/main/mcp-integrations/ghost.ts)
-  仍通过 `ghostHasTools` 限制 `visibleChipGhosts` 和 `readGhostManual`。
 - Cindy [PR #4440](https://github.com/makecindy/cindy/pull/4440) 已修复无 tools Manual
   的发现和读取，并于 2026-09-15 以
   `b201f1f663a1199c1e296ee0b6ddca7d465d4e9d` 合入 `main`。它允许花名册、
   `ghost_info` 和 `ghost_manual` 访问，同时仍拒绝对无 tools 插件执行 `ghost_call`。
-  代码合入本身不等于正式稳定版已经发布。
 
 低于声明最低版本的客户端会继续从市场获得最新兼容的历史 release；该历史 release
 仍包含 Skill，因此新包不需要保留过渡副本。本包删除 `skill` 声明和 `skills/` 目录，
@@ -38,17 +31,24 @@
 仍由 `cindy_ios_simulator` 目录提供；不得为插件伪造 `ghost_call` 工具。目录本地化
 契约没有 Manual 翻译字段；zh-CN/en/ja/ko 原有目录文案保持不变，操作 Manual 使用英文。
 
-## 验证门槛
+## 生产验证
 
-Draft 转为 Ready 前，必须在运行稳定版 Cindy v0.1.83 或更高版本的实际设备上安装
-精确打包的 `.cindy`，并验证：
+本次迁移已于 2026-09-16 在实际 Mac 上完成生产验收：将真实打包的 `.cindy` 安装到
+官方签名的 Cindy CN 0.1.83 客户端，使用隔离数据目录。测试客户端的正式稳定版身份
+由作者确认。产物身份和详细结果记录在
+[PR #111](https://github.com/makecindy/cindy-official-plugins/pull/111)。
 
-- 已安装并启用的插件出现在花名册和 `ghost_info`。
-- `ghost_manual` 可以读取入口和两个子页面。
-- 插件没有 tools，`ghost_call` 仍会拒绝调用。
-- 没有用户级 Skill 贡献时，Host 托管的模拟器核心工作流仍可使用。
+- 已验证安装并启用的插件出现在花名册和 `ghost_info`。
+- `ghost_manual` 成功读取根索引、入口和两个子页面。
+- 插件没有 tools，`ghost_call` 按预期返回 `TOOL_NOT_FOUND`。
+- 未注入或读取旧 Skill 时，Host 托管的内置 viewer、构建、安装、启动、界面读取、
+  点击、输入和提交工作流均通过。实际覆盖 WDA/JPEG 与 WDA 输入兼容模式；未覆盖
+  Native H.264/HID、外部回退或广泛回归。
+
+后续修改插件包时，仍须在运行不低于 `minCindyVersion` 的稳定版 Cindy 的实际设备上
+安装精确 `.cindy` 包并验证核心功能，再在 PR 中确认生产验收。
 
 在仓库根目录运行四个仓库门禁、`.tests/ios-simulator.test.mjs`，以及
 `node scripts/validate-plugin-manifest.mjs ./ios-simulator`。仓库打包器从已提交的
-`HEAD` 生成产物；安装前应检查归档内容。静态检查和 Draft 打包不能证明生产运行情况。
-在正式稳定版和实机验证可用前，PR 的 Production Cindy verification 必须保持未勾选。
+`HEAD` 生成产物；安装前应检查归档内容。静态检查和打包验证的是契约，不能替代独立的
+实机运行证据。

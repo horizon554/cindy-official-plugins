@@ -54,7 +54,7 @@ test('manifest keeps privileged simulator runtime ownership in Cindy Host', () =
   const parts = manifest.version.split('.').map(BigInt);
   const difference = parts.findIndex((part, index) => part !== baseVersion[index]);
   assert.ok(difference >= 0 && parts[difference] > baseVersion[difference], 'version must exceed main 1.1.3');
-  assert.equal(manifest.minCindyVersion, '0.1.83', 'Draft target for the first stable no-tools Manual release');
+  assert.equal(manifest.minCindyVersion, '0.1.83', 'minimum supported Cindy release for Manual-only discovery');
   const validated = validateGhostManifest(manifest);
   assert.equal(validated.ok, true, validated.reason);
   assert.equal(validated.manifest.kind, 'chip', 'preserve the legacy default kind');
@@ -203,15 +203,19 @@ test('Manual retains build boundaries, exact artifacts, and Host recovery', () =
   ]) assert.ok(source.includes(required), `Manual must retain: ${required}`);
 });
 
-test('Draft notes make the provisional stable-version gate explicit', () => {
+test('release notes retain the supported Host and production verification boundaries', () => {
   for (const file of ['README.md', 'README.zh-CN.md']) {
     const source = fs.readFileSync(path.join(pluginRoot, file), 'utf8');
+    assert.doesNotMatch(source, /\bDraft\b|\bprovisional\b|暂定/, `${file} must not retain pre-acceptance status`);
     for (const evidence of [
-      '0.1.83', '0.1.79', '#4440', 'b201f1f663a1199c1e296ee0b6ddca7d465d4e9d',
-      'visibleChipGhosts',
-      'readGhostManual', 'ghostHasTools', 'ghost_info', 'ghost_manual', 'ghost_call',
+      `minCindyVersion: ${manifest.minCindyVersion}`, '#4440',
+      'b201f1f663a1199c1e296ee0b6ddca7d465d4e9d',
+      'ghost_info', 'ghost_manual', 'ghost_call', 'TOOL_NOT_FOUND',
+      'WDA/JPEG', 'Native H.264/HID',
+      'https://github.com/makecindy/cindy-official-plugins/pull/111',
     ]) assert.ok(source.includes(evidence), `${file} must explain ${evidence}`);
-    assert.match(source, /provisional|暂定/);
+    // These assertions protect the documentation contract, not runtime acceptance.
+    // Installed-package results and artifact identities are recorded in the PR.
     assert.doesNotMatch(source, /\bTODO\b|\bTBD\b/);
   }
 });
